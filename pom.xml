@@ -91,7 +91,7 @@
             <version>1.4.200</version>
         </dependency>
         <!--Database-->
-
+        <!--File Uploads-->
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
@@ -102,6 +102,7 @@
             <artifactId>commons-io</artifactId>
             <version>2.2</version>
         </dependency>
+        <!--File Uploads-->
     </dependencies>
 
     <build>
