@@ -5,8 +5,11 @@ import org.example.web.dto.Book;
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,28 +17,46 @@ import java.util.List;
 public class BookRepository implements ProjectRepository<Book>, ApplicationContextAware {
 
     private final Logger logger = Logger.getLogger(BookRepository.class);
-    private final List<Book> repo = new ArrayList<>();
+//    private final List<Book> repo = new ArrayList<>();
     private ApplicationContext context;
+    private final NamedParameterJdbcTemplate jdbcTemplate;
+
+    public BookRepository(NamedParameterJdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
+    }
 
     @Override
     public List<Book> retreiveAll() {
-        return new ArrayList<>(repo);
+        List<Book> books = jdbcTemplate.query("SELECT * FROM books", (ResultSet rs, int rowNum) -> {
+            Book book = new Book();
+            book.setId(rs.getInt("id"));
+            book.setAuthor(rs.getString("author"));
+            book.setTitle(rs.getString("title"));
+            book.setSize(rs.getInt("size"));
+            return book;
+        });
+        return new ArrayList<>(books);
     }
 
     @Override
     public void store(Book book) {
-        book.setId(context.getBean(IdProvider.class).provideId(book));
-        book.setId(String.valueOf(book.hashCode()));
+//        book.setId(context.getBean(IdProvider.class).provideId(book));
+//        book.setId(book.hashCode());
+//        repo.add(book);
+        MapSqlParameterSource parameterSource = new MapSqlParameterSource();
+        parameterSource.addValue("author", book.getAuthor());
+        parameterSource.addValue("title", book.getTitle());
+        parameterSource.addValue("size", book.getSize());
+        jdbcTemplate.update("INSERT INTO books(author,title,size) VALUES(:author, :title, :size)", parameterSource);
         logger.info("store new book: " + book);
-        repo.add(book);
     }
 
     @Override
-    public boolean removeItemById(String bookIdToRemove) {
+    public boolean removeItemById(Integer bookIdToRemove) {
         for (Book book : retreiveAll()) {
             if (book.getId().equals(bookIdToRemove)) {
                 logger.info("remove book completed: " + book);
-                return repo.remove(book);
+                return true;//repo.remove(book);
             }
         }
         return false;
@@ -46,7 +67,7 @@ public class BookRepository implements ProjectRepository<Book>, ApplicationConte
         for (Book book : retreiveAll()) {
             if (book.getAuthor().equals(author)) {
                 logger.info("remove book completed: " + book);
-                return repo.remove(book);
+                return true;//repo.remove(book);
             }
         }
         return false;
@@ -57,7 +78,7 @@ public class BookRepository implements ProjectRepository<Book>, ApplicationConte
         for (Book book : retreiveAll()) {
             if (book.getTitle().equals(title)) {
                 logger.info("remove book completed: " + book);
-                return repo.remove(book);
+                return true;//repo.remove(book);
             }
         }
         return false;
@@ -68,7 +89,7 @@ public class BookRepository implements ProjectRepository<Book>, ApplicationConte
         for (Book book : retreiveAll()) {
             if (book.getSize().equals(size)) {
                 logger.info("remove book completed: " + book);
-                return repo.remove(book);
+                return true;//repo.remove(book);
             }
         }
         return false;
